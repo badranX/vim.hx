@@ -54,6 +54,7 @@ impl VimOps {
         if cx.editor.mode != Mode::Select {
             if !VIM_STATE.is_highlight() {
                 collapse_selection(cx);
+            } else {
                 VIM_STATE.stop_highlight();
             }
         } else {
