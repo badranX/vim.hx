@@ -38,10 +38,9 @@ Rust has great tooling! You can build this repo from source just like Helix itse
 - `gg`, `G`
 - `C-^`, `C-6`
 
-### What to watch for?
-
+### 🔍 Things to Watch For
 - No `Ctrl-R` for redo — Instead, use `U`, similar to Helix.
-- In Helix, the `%` key is mapped to match brackets, similar to Vim. To revert this mapping or assign it to a custom key, update the Helix configuration as follows:
+- The `%` key is mapped to `match_brackets`, similar to Vim. To revert this mapping or assign it to a custom key, update the Helix configuration as follows:
 
   ```toml
   [keys.normal]
@@ -53,9 +52,7 @@ Rust has great tooling! You can build this repo from source just like Helix itse
 
 ## Alternatives / Similar Projects
 
-Here are some other projects you might find interesting, depending on your needs:
-
-- Learn [Helix](https://helix-editor.com), give it a try!
+Here are some other projects you might find interesting:
 
 - [**helix-vim**](https://github.com/LGUG2Z/helix-vim) — A Vim-like configuration for Helix. This is an attempt to provide Vim-like keybindings using Helix configs only.
   
