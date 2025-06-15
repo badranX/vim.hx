@@ -1,7 +1,7 @@
 pub(crate) mod dap;
 pub(crate) mod lsp;
 pub(crate) mod typed;
-pub mod vim_patch;
+pub(crate) mod vim_patch;
 
 use crate::static_commands_with_default;
 pub use vim_patch::*;
