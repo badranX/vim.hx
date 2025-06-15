@@ -502,11 +502,14 @@ impl EvilOps {
         fun: fn(cx: &mut Context),
         op: EvilOperator,
         register: Option<char>,
+        count: usize,
         require_visual: bool,
     ) {
         if require_visual {
             select_mode(cx);
         }
+
+        cx.count = std::num::NonZeroUsize::new(count);
 
         fun(cx);
         Self::run_operator_for_current_selection(cx, op, register);
@@ -622,7 +625,7 @@ impl EvilOps {
                     _ => (),
                 }
                 if let Some(cmd_ch) = Self::char_to_instant_command(ch) {
-                    EvilOps::run_ops_after_command(cx, cmd_ch, cmd, register, true);
+                    EvilOps::run_ops_after_command(cx, cmd_ch, cmd, register, default_count, true);
                 }
             }
         });
