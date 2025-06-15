@@ -37,14 +37,16 @@ Rust has great tooling! You can build this repo from source just like Helix itse
 - `gg`, `G`
 - `C-^`, `C-6`
 
-### What’s Different?
+### What to watch for?
 
 - No `Ctrl-R` for redo — Instead, use `U`, similar to Helix.
-- No `%` for bracket jumping — Use `mm`, or configure your own mapping in the Helix config:
+- In Helix, the `%` key is mapped to match brackets, similar to Vim. To revert this mapping or assign it to a custom key, update the Helix configuration as follows:
 
   ```toml
   [keys.normal]
-  "%" = ["match_brackets"]
+  "%" = "select_all"
+  [keys.select]
+  "%" = "select_all"
   ```
 
 
