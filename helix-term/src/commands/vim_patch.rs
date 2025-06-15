@@ -502,11 +502,18 @@ impl EvilOps {
         fun: fn(cx: &mut Context),
         op: EvilOperator,
         register: Option<char>,
+        require_visual: bool,
     ) {
-        select_mode(cx);
+        if require_visual {
+            select_mode(cx);
+        }
+
         fun(cx);
         Self::run_operator_for_current_selection(cx, op, register);
-        normal_mode(cx);
+
+        if require_visual {
+            normal_mode(cx);
+        }
     }
 
     fn run_operator(
@@ -558,7 +565,7 @@ impl EvilOps {
         }
     }
 
-    fn char_to_command(ch: char) -> Option<fn(&mut Context)> {
+    fn char_to_instant_command(ch: char) -> Option<fn(&mut Context)> {
         match ch {
             'w' => Some(extend_next_word_start),
             'W' => Some(extend_next_long_word_start),
@@ -573,6 +580,23 @@ impl EvilOps {
         }
     }
 
+    fn op_till_char(cx: &mut Context, op: EvilOperator, register: Option<char>, count: usize) {
+        Self::run_op_find_char(cx, Direction::Forward, false, true, count, register, op);
+    }
+
+    fn op_next_char(cx: &mut Context, op: EvilOperator, register: Option<char>, count: usize) {
+        Self::run_op_find_char(cx, Direction::Forward, true, true, count, register, op);
+    }
+
+
+    fn op_till_prev_char(cx: &mut Context, op: EvilOperator, register: Option<char>, count: usize) {
+        Self::run_op_find_char(cx, Direction::Backward, false, true, count, register, op);
+    }
+
+    fn op_prev_char(cx: &mut Context, op: EvilOperator, register: Option<char>, count: usize) {
+        Self::run_op_find_char(cx, Direction::Backward, true, true, count, register, op);
+    }
+
     pub fn operator_impl(cx: &mut Context, cmd: EvilOperator, register: Option<char>) {
         if cx.editor.mode == Mode::Select {
             EvilOps::run_operator_for_current_selection(cx, cmd, register);
@@ -580,7 +604,7 @@ impl EvilOps {
             return;
         }
 
-        let count = cx.count();
+        let default_count = cx.count();
 
         cx.on_next_key(move |cx, event| {
             cx.editor.autoinfo = None;
@@ -588,18 +612,17 @@ impl EvilOps {
                 match ch {
                     'i' => vim_operate_textobject(cx, textobject::TextObject::Inside, cmd),
                     'a' => vim_operate_textobject(cx, textobject::TextObject::Around, cmd),
-                    'd' => EvilOps::run_operator_lines(cx, cmd, register, count),
-                    'y' => EvilOps::run_operator_lines(cx, cmd, register, count),
-                    'c' => EvilOps::run_operator_lines(cx, cmd, register, count),
+                    'd' => EvilOps::run_operator_lines(cx, cmd, register, default_count),
+                    'y' => EvilOps::run_operator_lines(cx, cmd, register, default_count),
+                    'c' => EvilOps::run_operator_lines(cx, cmd, register, default_count),
+                    't' => EvilOps::op_till_char(cx, cmd, register, default_count),
+                    'f' => EvilOps::op_next_char(cx, cmd, register, default_count),
+                    'T' => EvilOps::op_till_prev_char(cx, cmd, register, default_count),
+                    'F' => EvilOps::op_prev_char(cx, cmd, register, default_count),
                     _ => (),
                 }
-                if let Some(cmd_ch) = Self::char_to_command(ch) {
-                    EvilOps::run_ops_after_command(
-                        cx,
-                        cmd_ch,
-                        cmd,
-                        register,
-                    );
+                if let Some(cmd_ch) = Self::char_to_instant_command(ch) {
+                    EvilOps::run_ops_after_command(cx, cmd_ch, cmd, register, true);
                 }
             }
         });
@@ -619,6 +642,59 @@ impl EvilOps {
         ];
 
         cx.editor.autoinfo = Some(Info::new("Apply Modifier", &help_text));
+    }
+
+    fn run_op_find_char(
+        cx: &mut Context,
+        direction: Direction,
+        inclusive: bool,
+        extend: bool,
+        count: usize,
+        register: Option<char>,
+        op: EvilOperator,
+    ) {
+        // Almost Copy/Paste from commands::find_char
+
+        // TODO: count is reset to 1 before next key so we move it into the closure here.
+        // Would be nice to carry over.
+
+        // need to wait for next key
+        // TODO: should this be done by grapheme rather than char?  For example,
+        // we can't properly handle the line-ending CRLF case here in terms of char.
+        cx.on_next_key(move |cx, event| {
+            let ch = match event {
+                KeyEvent {
+                    code: KeyCode::Enter,
+                    ..
+                } => {
+                    find_char_line_ending(cx, count, direction, inclusive, extend);
+                    return;
+                }
+
+                KeyEvent {
+                    code: KeyCode::Tab, ..
+                } => '\t',
+
+                KeyEvent {
+                    code: KeyCode::Char(ch),
+                    ..
+                } => ch,
+                _ => return,
+            };
+            let motion = move |editor: &mut Editor| {
+                match direction {
+                    Direction::Forward => {
+                        find_char_impl(editor, &find_next_char_impl, inclusive, extend, ch, count)
+                    }
+                    Direction::Backward => {
+                        find_char_impl(editor, &find_prev_char_impl, inclusive, extend, ch, count)
+                    }
+                };
+            };
+
+            cx.editor.apply_motion(motion);
+            Self::run_operator_for_current_selection(cx, op, register);
+        })
     }
 }
 
