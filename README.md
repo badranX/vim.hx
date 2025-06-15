@@ -19,6 +19,7 @@ Rust has great tooling! You can build this repo from source just like Helix itse
 - `v`, `V`
 - `va<char>`, `vi<textobject>` (`<textobject>`: `w`, `W`, `p`...etc)
 - Treesitter-related selection such as `vaf` to select a function.
+- `gv`
 
 ### Operators/Modifiers
 
