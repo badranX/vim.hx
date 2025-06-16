@@ -694,8 +694,8 @@ impl VimOpCtx {
             if let Some(ch) = event.char() {
                 match ch {
                     'd' | 'y' | 'c' => opcx.run_operator_lines(cx),
-                    'i' => Self::modify_textobject(cx, Some(opcx), textobject::TextObject::Inside),
-                    'a' => Self::modify_textobject(cx, Some(opcx), textobject::TextObject::Around),
+                    'i' => Self::vim_modify_textobject(cx, Some(opcx), textobject::TextObject::Inside),
+                    'a' => Self::vim_modify_textobject(cx, Some(opcx), textobject::TextObject::Around),
                     't' => opcx.op_till_char(cx),
                     'f' => opcx.op_next_char(cx),
                     'T' => opcx.op_till_prev_char(cx),
@@ -786,7 +786,7 @@ impl VimOpCtx {
         })
     }
 
-    fn modify_textobject(
+    fn vim_modify_textobject(
         cx: &mut Context,
         opcx: Option<VimOpCtx>,
         objtype: textobject::TextObject,
