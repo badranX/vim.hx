@@ -69,7 +69,7 @@ impl AtomicState {
     }
 }
 
-pub mod vim_helix_patch {
+pub mod vim_hx_hooks {
     use super::*;
 
     pub fn hook_after_each_command(cx: &mut Context, cmd: &MappableCommand) {
