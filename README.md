@@ -7,6 +7,17 @@ A [Helix](https://helix-editor.com) fork that adds Vim-like keybindings — inte
   <img src="./screenshot.png" alt="Screenshot" style="width:80%;" />
 </p>
 
+## Switching between Vim and Helix
+To switch between Vim mode and Helix, use
+
+```bash
+:vim_enable
+```
+
+```bash
+:vim_disable
+```
+
 ## Vim Supported Keybindings (Partial List)
 
 ### Visual Mode & Visual Lines
@@ -55,7 +66,7 @@ Some of these differences might be removed in the future.
    - For the whole file: `ggVG`  
    - You can also remap `select_all` as explained earlier.
 
-2. **Select using regex**:  
+2. **Create multi-cursor by selecting using regex**:  
    - Press `s`, then type your regex (e.g., `(foo|bar)`) and hit `<Enter>`.
 
 3. **Replace using multi-cursor**:  
@@ -64,7 +75,6 @@ Some of these differences might be removed in the future.
 4. **Exit multi-cursor mode**:  
    - Press `,` (comma)
 
-> 💡 Based on the [original Helix discussion](https://github.com/helix-editor/helix/discussions/3630)
 
 ### 🗂️ Where’s the File Explorer?
  - `<Space>e`  Open file explorer in workspace root
