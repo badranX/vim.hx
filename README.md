@@ -50,12 +50,12 @@ This project is not intended to be a replica of Vim, so note the following diffe
 - No `Ctrl-R` for redo — Instead, use uppercase `U`, as in Helix.
  - Helix allows selections outside of "Select" mode (equivalent to Vim's "Visual" mode). Currently, this patch does not alter that behavior. The added Vim commands will ignore such selections.
  - `s` is used by Helix for `select_regex` and it's an important command for multi-cursor support, use `c` instead.
- - The `%` key is mapped to `match_brackets`, similar to Vim. To revert this mapping or assign it to a custom key, update the Helix configuration as follows:
+ - The `%` key is mapped to `match_brackets`, similar to Vim. To revert this mapping or assign it to a custom key, update the Helix configuration:
  ```toml
   [keys.normal]
-  "%" = "select_all"
+  "%" = "vim_select_all"
   [keys.select]
-  "%" = "select_all"
+  "%" = "vim_select_all"
 ```
 
 Some of these differences might be removed in the future.
