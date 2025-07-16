@@ -122,6 +122,7 @@ fn helix_default() -> HashMap<Mode, KeyTrie> {
             "e" => goto_prev_entry,
             "T" => goto_prev_test,
             "p" => goto_prev_paragraph,
+            "x" => goto_prev_xml_element,
             "space" => add_newline_above,
         },
         "]" => { "Right bracket"
@@ -136,6 +137,7 @@ fn helix_default() -> HashMap<Mode, KeyTrie> {
             "e" => goto_next_entry,
             "T" => goto_next_test,
             "p" => goto_next_paragraph,
+            "x" => goto_next_xml_element,
             "space" => add_newline_below,
         },
 
