@@ -16,6 +16,7 @@ use helix_view::{document::Mode, editor::ConfigEvent, DocumentId};
 #[derive(Default)]
 pub struct AtomicState {
     visual_lines: AtomicBool,
+    visual_block: AtomicBool,
     highlight: AtomicBool,
     vim_paste: AtomicBool,
     cmd_hook_enabled: AtomicBool,
@@ -30,6 +31,7 @@ impl AtomicState {
     pub const fn new() -> Self {
         Self {
             visual_lines: AtomicBool::new(false),
+            visual_block: AtomicBool::new(false),
             highlight: AtomicBool::new(false),
             vim_paste: AtomicBool::new(false),
             cmd_hook_enabled: AtomicBool::new(true),
@@ -66,6 +68,23 @@ impl AtomicState {
 
     pub fn is_visual_line(&self) -> bool {
         self.visual_lines.load(Ordering::Relaxed)
+    }
+
+    pub fn visual_block(&self) {
+        self.visual_block.store(true, Ordering::Relaxed);
+    }
+
+    pub fn exit_visual_block(&self) {
+        self.visual_block.store(false, Ordering::Relaxed);
+    }
+
+    pub fn exit_visual_modes(&self) {
+        self.exit_visual_line();
+        self.exit_visual_block();
+    }
+
+    pub fn is_visual_block(&self) -> bool {
+        self.visual_block.load(Ordering::Relaxed)
     }
 
     pub fn allow_highlight(&self) {
@@ -138,6 +157,7 @@ pub mod vim_hx_hooks {
                 if VIM_STATE.is_visual_line() {
                     extend_to_line_bounds(cx);
                 }
+
                 VIM_STATE.save_current_selection(cx);
             }
             Mode::Normal => {
@@ -272,6 +292,8 @@ macro_rules! static_commands_with_default {
         vim_select_all, "Select all in both normal and select mode (vim.hx)",
         vim_cmd_off, "Allow Helix commands to run as intended (vim.hx)",
         vim_cmd_on, "End vim_cmd_off, only works in Vim mode (vim.hx)",
+        vim_visual_block, "Enter visual block mode (vim)",
+        vim_insert_at_line_start, "Insert at start of line except in visual block mode (vim)",
             $($name, $doc,)*
         }
     };
@@ -320,14 +342,30 @@ pub mod vim_typed_commands {
 pub use vim_commands::*;
 
 mod vim_commands {
-    use vim_patch::exit_select_mode;
-
     use super::*;
 
     pub fn vim_visual_lines(cx: &mut Context) {
         select_mode(cx);
         VIM_STATE.visual_line();
         extend_to_line_bounds(cx);
+    }
+
+    pub fn vim_visual_block(cx: &mut Context) {
+        vim_select_mode(cx);
+        VIM_STATE.visual_block();
+    }
+
+    pub fn vim_insert_at_line_start(cx: &mut Context) {
+        if VIM_STATE.is_visual_block() {
+            // Helix multi-cursor outweigh exact Vim behaviour
+            // to match Vim behavior mask the following line, maybe through configs
+            collapse_selection(cx);
+
+            normal_mode(cx);
+            insert_mode(cx);
+        } else {
+            insert_at_line_start(cx);
+        }
     }
 
     wrap_many_with_hooks!(
@@ -366,6 +404,8 @@ mod vim_commands {
     pub fn vim_extend_visual_line_down(cx: &mut Context) {
         if VIM_STATE.is_visual_line() {
             extend_line_down(cx);
+        } else if VIM_STATE.is_visual_block() {
+            vim_utils::visual_block_impl(cx, Direction::Forward)
         } else {
             extend_visual_line_down(cx);
         }
@@ -374,6 +414,8 @@ mod vim_commands {
     pub fn vim_extend_visual_line_up(cx: &mut Context) {
         if VIM_STATE.is_visual_line() {
             extend_line_up(cx);
+        } else if VIM_STATE.is_visual_block() {
+            vim_utils::visual_block_impl(cx, Direction::Backward)
         } else {
             extend_visual_line_up(cx);
         }
@@ -383,16 +425,28 @@ mod vim_commands {
         if cx.editor.mode == Mode::Select {
             VIM_STATE.save_current_selection(cx);
         }
+
         normal_mode(cx);
-        VIM_STATE.exit_visual_line();
+
+        if VIM_STATE.is_visual_block() {
+            keep_primary_selection(cx);
+        }
+
+        VIM_STATE.exit_visual_modes();
     }
 
     pub fn vim_exit_select_mode(cx: &mut Context) {
         if cx.editor.mode == Mode::Select {
             VIM_STATE.save_current_selection(cx);
         }
+
+        if VIM_STATE.is_visual_block() {
+            keep_primary_selection(cx);
+        }
+
         exit_select_mode(cx);
-        VIM_STATE.exit_visual_line();
+
+        VIM_STATE.exit_visual_modes();
     }
 
     pub fn vim_move_paragraph_forward(cx: &mut Context) {
@@ -530,7 +584,7 @@ mod vim_commands {
     }
 
     pub fn vim_select_mode(cx: &mut Context) {
-        VIM_STATE.exit_visual_line();
+        VIM_STATE.exit_visual_modes();
         select_mode(cx);
     }
 
@@ -591,7 +645,7 @@ mod vim_commands {
     }
 
     pub fn vim_select_regex(cx: &mut Context) {
-        VIM_STATE.exit_visual_line();
+        VIM_STATE.exit_visual_modes();
         select_regex(cx);
     }
 
@@ -664,6 +718,68 @@ mod vim_utils {
             range.put_cursor(slice, head, true).anchor
         };
         Range::new(anchor, head)
+    }
+
+    pub fn selection_line_range(cx: &mut Context) -> (usize, usize) {
+        let (view, doc) = current!(cx.editor);
+        let text = doc.text().slice(..);
+        let selection = doc.selection(view.id);
+
+        let lines: Vec<_> = selection
+            .ranges()
+            .iter()
+            .map(|range| range.cursor_line(text))
+            .collect();
+
+        (
+            lines.iter().min().cloned().unwrap_or(0),
+            lines.iter().max().cloned().unwrap_or(0),
+        )
+    }
+
+    pub fn visual_block_impl(cx: &mut Context, dir: Direction) {
+        fn copy_selection(cx: &mut Context, dir: Direction) {
+            // Favouring using user facing commands over hidden Helix implementation
+            match dir {
+                Direction::Forward => copy_selection_on_next_line(cx),
+                Direction::Backward => copy_selection_on_prev_line(cx),
+            }
+        }
+        let (view, doc) = current!(cx.editor);
+        let selection = doc.selection(view.id);
+        if selection.len() == 1 {
+            copy_selection(cx, dir)
+        } else {
+            let (min_line, max_line) = vim_utils::selection_line_range(cx);
+
+            if min_line == max_line {
+                copy_selection(cx, dir);
+                return;
+            }
+
+            let tgt_line = match dir {
+                Direction::Backward => max_line,
+                Direction::Forward => min_line,
+            };
+
+            let mut is_multi_line_cursor = false;
+            loop {
+                let (view, doc) = current!(cx.editor);
+                let view_id = view.id;
+                let text = doc.text().slice(..);
+                let selection = doc.selection(view_id);
+
+                if tgt_line == selection.primary().cursor_line(text) {
+                    remove_primary_selection(cx);
+                    is_multi_line_cursor = true
+                } else if is_multi_line_cursor {
+                    break;
+                } else {
+                    copy_selection(cx, dir);
+                    break;
+                }
+            }
+        }
     }
 
     pub fn is_line_end(slice: RopeSlice, range: Range, line: usize) -> bool {
