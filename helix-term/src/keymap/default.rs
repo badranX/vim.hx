@@ -432,6 +432,8 @@ fn vim_default() -> HashMap<Mode, KeyTrie> {
         "C-6" => goto_last_accessed_file,
         "C-^" => goto_last_accessed_file,
 
+        "C-v" => vim_visual_block,
+
         "x" => vim_delete_any_selection,
 
         "%" => vim_match_brackets,
@@ -491,7 +493,7 @@ fn vim_default() -> HashMap<Mode, KeyTrie> {
         ":" => command_mode,
 
         "i" => insert_mode,
-        "I" => insert_at_line_start,
+        "I" => vim_insert_at_line_start,
         "a" => vim_append,
         "A" => insert_at_line_end,
         "o" => open_below,
