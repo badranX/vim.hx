@@ -315,6 +315,34 @@ pub mod vim_typed_commands {
         cx.editor.config_events.0.send(ConfigEvent::Refresh)?;
         Ok(())
     }
+
+    pub fn vim_sed(
+        cx: &mut compositor::Context,
+        args: Args,
+        event: PromptEvent,
+    ) -> anyhow::Result<()> {
+        if event != PromptEvent::Validate {
+            return Ok(());
+        }
+
+        let (prev_sel, end_char) = {
+            let (view, doc) = current!(cx.editor);
+            (doc.selection(view.id).clone(), doc.text().len_chars())
+        };
+
+        if cx.editor.mode != Mode::Select {
+            let (view, doc) = current!(cx.editor);
+            let new_selection = Selection::single(0, end_char);
+            doc.set_selection(view.id, new_selection);
+        }
+
+        let cmd = format!("{} 's{}'", "sed", args.first().unwrap_or(""));
+        shell(cx, &cmd, &ShellBehavior::Replace);
+
+        let (view, doc) = current!(cx.editor);
+        doc.set_selection(view.id, prev_sel);
+        Ok(())
+    }
 }
 
 pub use vim_commands::*;

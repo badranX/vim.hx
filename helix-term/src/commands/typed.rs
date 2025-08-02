@@ -2605,6 +2605,17 @@ pub const TYPABLE_COMMAND_LIST: &[TypableCommand] = &[
         },
     },
     TypableCommand {
+        name: "s",
+        aliases: &[],
+        doc: "run sed command (vim.hx)",
+        fun: vim_typed_commands::vim_sed,
+        completer: CommandCompleter::none(),
+        signature: Signature {
+            positionals: (0, Some(1)),
+            ..Signature::DEFAULT
+        }
+    },
+    TypableCommand {
         name: "quit",
         aliases: &["q"],
         doc: "Close the current view.",
