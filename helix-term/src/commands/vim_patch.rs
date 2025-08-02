@@ -16,7 +16,9 @@ use helix_view::{document::Mode, editor::ConfigEvent, DocumentId};
 #[derive(Default)]
 pub struct AtomicState {
     visual_lines: AtomicBool,
+    gv_visual_lines: AtomicBool,
     visual_block: AtomicBool,
+    gv_visual_block: AtomicBool,
     highlight: AtomicBool,
     vim_paste: AtomicBool,
     cmd_hook_enabled: AtomicBool,
@@ -31,7 +33,9 @@ impl AtomicState {
     pub const fn new() -> Self {
         Self {
             visual_lines: AtomicBool::new(false),
+            gv_visual_lines: AtomicBool::new(false),
             visual_block: AtomicBool::new(false),
+            gv_visual_block: AtomicBool::new(false),
             highlight: AtomicBool::new(false),
             vim_paste: AtomicBool::new(false),
             cmd_hook_enabled: AtomicBool::new(true),
@@ -51,9 +55,20 @@ impl AtomicState {
     pub fn set_gv_selection(&self, sel: Selection, id: DocumentId) {
         let mut lock = self.gv_selection.lock().unwrap();
         *lock = Some((sel, id));
+
+        self.gv_visual_lines
+            .store(self.is_visual_line(), Ordering::Relaxed);
+        self.gv_visual_block
+            .store(self.is_visual_block(), Ordering::Relaxed);
     }
 
     pub fn get_gv_selection(&self) -> Option<(Selection, DocumentId)> {
+        let is_gv_lines = self.gv_visual_lines.load(Ordering::Relaxed);
+        let is_gv_block = self.gv_visual_block.load(Ordering::Relaxed);
+
+        self.visual_lines.store(is_gv_lines, Ordering::Relaxed);
+        self.visual_block.store(is_gv_block, Ordering::Relaxed);
+
         let lock = self.gv_selection.lock().unwrap();
         lock.clone()
     }
