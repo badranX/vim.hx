@@ -325,13 +325,9 @@ pub mod vim_typed_commands {
             return Ok(());
         }
 
-        let (prev_sel, end_char) = {
-            let (view, doc) = current!(cx.editor);
-            (doc.selection(view.id).clone(), doc.text().len_chars())
-        };
-
         if cx.editor.mode != Mode::Select {
             let (view, doc) = current!(cx.editor);
+            let end_char = doc.text().len_chars();
             let new_selection = Selection::single(0, end_char);
             doc.set_selection(view.id, new_selection);
         }
@@ -339,38 +335,14 @@ pub mod vim_typed_commands {
         let cmd = format!("{} 's{}'", "sed", args.first().unwrap_or(""));
         shell(cx, &cmd, &ShellBehavior::Replace);
 
-        // let (view, doc) = current!(cx.editor);
+        // Collaps selection
+        let (view, doc) = current!(cx.editor);
+        let selection = doc.selection(view.id).clone().transform(|range| {
+            let pos = range.cursor(doc.text().slice(..));
+            Range::new(pos, pos)
+        });
+        doc.set_selection(view.id, selection);
 
-        // let text = doc.text().slice(..);
-
-        // if end_char < doc.text().len_chars() {}
-        // doc.set_selection(view.id, prev_sel);
-        //
-        // collapse selection
-        //
-        let output = {
-            let (view, doc) = current!(cx.editor);
-
-            let text = doc.text().slice(..);
-            doc.selection(view.id).primary().slice(text)
-        };
-
-        if output.starts_with("sed: ") {
-            cx.editor
-                .set_error(format!("Error: {}", output.clone().to_string()));
-            // doc.selection(view_id).primary().slice(text)
-        }
-
-        // if false {
-        //     let selection = doc.selection(view.id).clone().transform(|range| {
-        //         let pos = range.cursor(text);
-        //         Range::new(pos, pos)
-        //     });
-        //     doc.set_selection(view.id, selection);
-        // }
-        //
-        //
-        // collapse_selection(cx);
         Ok(())
     }
 }
