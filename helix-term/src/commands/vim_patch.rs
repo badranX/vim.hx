@@ -339,8 +339,38 @@ pub mod vim_typed_commands {
         let cmd = format!("{} 's{}'", "sed", args.first().unwrap_or(""));
         shell(cx, &cmd, &ShellBehavior::Replace);
 
-        let (view, doc) = current!(cx.editor);
-        doc.set_selection(view.id, prev_sel);
+        // let (view, doc) = current!(cx.editor);
+
+        // let text = doc.text().slice(..);
+
+        // if end_char < doc.text().len_chars() {}
+        // doc.set_selection(view.id, prev_sel);
+        //
+        // collapse selection
+        //
+        let output = {
+            let (view, doc) = current!(cx.editor);
+
+            let text = doc.text().slice(..);
+            doc.selection(view.id).primary().slice(text)
+        };
+
+        if output.starts_with("sed: ") {
+            cx.editor
+                .set_error(format!("Error: {}", output.clone().to_string()));
+            // doc.selection(view_id).primary().slice(text)
+        }
+
+        // if false {
+        //     let selection = doc.selection(view.id).clone().transform(|range| {
+        //         let pos = range.cursor(text);
+        //         Range::new(pos, pos)
+        //     });
+        //     doc.set_selection(view.id, selection);
+        // }
+        //
+        //
+        // collapse_selection(cx);
         Ok(())
     }
 }
