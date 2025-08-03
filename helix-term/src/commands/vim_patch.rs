@@ -172,7 +172,6 @@ pub mod vim_hx_hooks {
                 if VIM_STATE.is_visual_line() {
                     extend_to_line_bounds(cx);
                 }
-
                 VIM_STATE.save_current_selection(cx);
             }
             Mode::Normal => {
@@ -441,9 +440,13 @@ mod vim_commands {
             VIM_STATE.save_current_selection(cx);
         }
 
+        let is_keep_primary_selection =
+            cx.editor.mode != Mode::Insert && VIM_STATE.is_visual_block();
+
         normal_mode(cx);
 
-        if VIM_STATE.is_visual_block() {
+        // TODO should visual block exit on ESCP after insertion?
+        if is_keep_primary_selection {
             keep_primary_selection(cx);
         }
 
