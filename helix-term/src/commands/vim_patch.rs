@@ -441,7 +441,7 @@ mod vim_commands {
         }
 
         let is_keep_primary_selection =
-            cx.editor.mode != Mode::Insert && VIM_STATE.is_visual_block();
+            cx.editor.mode == Mode::Insert && VIM_STATE.is_visual_block();
 
         normal_mode(cx);
 
