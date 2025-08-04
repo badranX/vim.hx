@@ -304,6 +304,10 @@ macro_rules! static_commands_with_default {
         vim_paste_clipboard_before, "Paste clipboard before selections (vim)",
         vim_move_char_left, "Move left (vim)",
         vim_move_char_right, "Move right (vim)",
+        vim_extend_char_left, "Extend left (vim)",
+        vim_extend_char_right, "Extend right (vim)",
+        vim_custom_extend_char_left, "Extend left like Helix, but like Vim in visual block (vim.hx)",
+        vim_custom_extend_char_right, "Extend right like Helix, but like Vim in visual block (vim.hx)",
         vim_select_regex, "Select all regex matches inside selections (vim.hx)",
         vim_select_all, "Select all in both normal and select mode (vim.hx)",
         vim_cmd_off, "Allow Helix commands to run as intended (vim.hx)",
@@ -658,6 +662,50 @@ mod vim_commands {
             vim_utils::vim_move_horizontally,
             Direction::Forward,
             Movement::Move,
+        )
+    }
+
+    pub fn vim_custom_extend_char_left(cx: &mut Context) {
+        if VIM_STATE.is_visual_block() {
+            move_impl(
+                cx,
+                vim_utils::vim_move_horizontally,
+                Direction::Backward,
+                Movement::Extend,
+            )
+        } else {
+            extend_char_left(cx);
+        }
+    }
+
+    pub fn vim_custom_extend_char_right(cx: &mut Context) {
+        if VIM_STATE.is_visual_block() {
+            move_impl(
+                cx,
+                vim_utils::vim_move_horizontally,
+                Direction::Forward,
+                Movement::Extend,
+            )
+        } else {
+            extend_char_right(cx);
+        }
+    }
+
+    pub fn vim_extend_char_left(cx: &mut Context) {
+        move_impl(
+            cx,
+            vim_utils::vim_move_horizontally,
+            Direction::Backward,
+            Movement::Extend,
+        )
+    }
+
+    pub fn vim_extend_char_right(cx: &mut Context) {
+        move_impl(
+            cx,
+            vim_utils::vim_move_horizontally,
+            Direction::Forward,
+            Movement::Extend,
         )
     }
 

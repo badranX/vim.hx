@@ -768,10 +768,10 @@ fn vim_default() -> HashMap<Mode, KeyTrie> {
     });
     let mut select = normal.clone();
     select.merge_nodes(keymap!({ "Select mode"
-        "h" | "left" => extend_char_left,
+        "h" | "left" => vim_custom_extend_char_left,
         "j" | "down" => vim_extend_visual_line_down,
         "k" | "up" => vim_extend_visual_line_up,
-        "l" | "right" => extend_char_right,
+        "l" | "right" => vim_custom_extend_char_right,
 
         "a" => select_textobject_around,
         "i" => select_textobject_inner,
