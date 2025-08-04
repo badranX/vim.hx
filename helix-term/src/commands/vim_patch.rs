@@ -438,24 +438,17 @@ mod vim_commands {
     }
 
     pub fn vim_normal_mode(cx: &mut Context) {
-        match cx.editor.mode {
-            Mode::Select => {
-                VIM_STATE.save_current_selection(cx);
-            }
-            Mode::Insert => {
-                if VIM_STATE.is_visual_block() {
-                    normal_mode(cx);
-                    return;
-                }
-            }
-            Mode::Normal => {
-                if VIM_STATE.is_visual_block() {
-                    keep_primary_selection(cx);
-                }
-            }
+        if cx.editor.mode == Mode::Select {
+            VIM_STATE.save_current_selection(cx);
         }
 
         normal_mode(cx);
+
+        if VIM_STATE.is_visual_block() {
+            VIM_STATE.save_current_selection(cx);
+            keep_primary_selection(cx);
+        }
+
         VIM_STATE.exit_visual_modes();
     }
 
@@ -1179,7 +1172,6 @@ impl VimOpCtx {
                 return;
             }
 
-            VIM_STATE.exit_visual_modes();
             opcx.run_operator_for_current_selection(cx);
             exit_select_mode(cx);
             return;
