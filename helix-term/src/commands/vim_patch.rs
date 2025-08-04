@@ -668,7 +668,7 @@ mod vim_commands {
     }
 
     pub fn vim_select_all(cx: &mut Context) {
-        VIM_STATE.exit_visual_line();
+        VIM_STATE.exit_visual_modes();
         VIM_STATE.allow_highlight();
         select_all(cx);
     }
@@ -1160,7 +1160,21 @@ impl VimOpCtx {
     pub fn operator_impl(cx: &mut Context, op: VimOp, register: Option<char>) {
         let opcx = Self::with_custom_register(cx, op, register);
         if cx.editor.mode == Mode::Select {
-            VIM_STATE.exit_visual_line();
+            if VIM_STATE.is_visual_block() {
+                // Copy/Paste from yank_joined
+                let separator = doc!(cx.editor).line_ending.as_str();
+                yank_joined_impl(
+                    cx.editor,
+                    separator,
+                    cx.register
+                        .unwrap_or(cx.editor.config().default_yank_register),
+                );
+                VIM_STATE.exit_visual_modes();
+                exit_select_mode(cx);
+                return;
+            }
+
+            VIM_STATE.exit_visual_modes();
             opcx.run_operator_for_current_selection(cx);
             exit_select_mode(cx);
             return;
