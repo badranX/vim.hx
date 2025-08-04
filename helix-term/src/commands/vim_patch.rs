@@ -74,6 +74,7 @@ impl AtomicState {
     }
 
     pub fn visual_line(&self) {
+        self.exit_visual_block();
         self.visual_lines.store(true, Ordering::Relaxed);
     }
 
@@ -86,6 +87,7 @@ impl AtomicState {
     }
 
     pub fn visual_block(&self) {
+        self.exit_visual_line();
         self.visual_block.store(true, Ordering::Relaxed);
     }
 
@@ -436,20 +438,24 @@ mod vim_commands {
     }
 
     pub fn vim_normal_mode(cx: &mut Context) {
-        if cx.editor.mode == Mode::Select {
-            VIM_STATE.save_current_selection(cx);
+        match cx.editor.mode {
+            Mode::Select => {
+                VIM_STATE.save_current_selection(cx);
+            }
+            Mode::Insert => {
+                if VIM_STATE.is_visual_block() {
+                    normal_mode(cx);
+                    return;
+                }
+            }
+            Mode::Normal => {
+                if VIM_STATE.is_visual_block() {
+                    keep_primary_selection(cx);
+                }
+            }
         }
-
-        let is_keep_primary_selection =
-            cx.editor.mode == Mode::Insert && VIM_STATE.is_visual_block();
 
         normal_mode(cx);
-
-        // TODO should visual block exit on ESCP after insertion?
-        if is_keep_primary_selection {
-            keep_primary_selection(cx);
-        }
-
         VIM_STATE.exit_visual_modes();
     }
 
@@ -1169,8 +1175,7 @@ impl VimOpCtx {
                     cx.register
                         .unwrap_or(cx.editor.config().default_yank_register),
                 );
-                VIM_STATE.exit_visual_modes();
-                exit_select_mode(cx);
+                vim_exit_select_mode(cx);
                 return;
             }
 
