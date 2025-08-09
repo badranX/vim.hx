@@ -442,14 +442,14 @@ mod vim_commands {
     }
 
     pub fn vim_normal_mode(cx: &mut Context) {
-        if cx.editor.mode == Mode::Select {
+        if cx.editor.mode == Mode::Select || VIM_STATE.is_visual_block() {
+            // Assumption: Visual Block is only available in Select & Insert mode and in both cases require saving selection
             VIM_STATE.save_current_selection(cx);
         }
 
         normal_mode(cx);
 
         if VIM_STATE.is_visual_block() {
-            VIM_STATE.save_current_selection(cx);
             keep_primary_selection(cx);
         }
 
