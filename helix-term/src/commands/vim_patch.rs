@@ -650,7 +650,7 @@ mod vim_commands {
     pub fn vim_move_char_left(cx: &mut Context) {
         move_impl(
             cx,
-            vim_utils::vim_move_horizontally,
+            vim_utils::vim_hx_move_horizontally,
             Direction::Backward,
             Movement::Move,
         )
@@ -659,7 +659,7 @@ mod vim_commands {
     pub fn vim_move_char_right(cx: &mut Context) {
         move_impl(
             cx,
-            vim_utils::vim_move_horizontally,
+            vim_utils::vim_hx_move_horizontally,
             Direction::Forward,
             Movement::Move,
         )
@@ -669,7 +669,7 @@ mod vim_commands {
         if VIM_STATE.is_visual_block() {
             move_impl(
                 cx,
-                vim_utils::vim_move_horizontally,
+                vim_utils::vim_hx_move_horizontally,
                 Direction::Backward,
                 Movement::Extend,
             )
@@ -682,7 +682,7 @@ mod vim_commands {
         if VIM_STATE.is_visual_block() {
             move_impl(
                 cx,
-                vim_utils::vim_move_horizontally,
+                vim_utils::vim_hx_move_horizontally,
                 Direction::Forward,
                 Movement::Extend,
             )
@@ -694,7 +694,7 @@ mod vim_commands {
     pub fn vim_extend_char_left(cx: &mut Context) {
         move_impl(
             cx,
-            vim_utils::vim_move_horizontally,
+            vim_utils::vim_hx_move_horizontally,
             Direction::Backward,
             Movement::Extend,
         )
@@ -703,7 +703,7 @@ mod vim_commands {
     pub fn vim_extend_char_right(cx: &mut Context) {
         move_impl(
             cx,
-            vim_utils::vim_move_horizontally,
+            vim_utils::vim_hx_move_horizontally,
             Direction::Forward,
             Movement::Extend,
         )
@@ -847,7 +847,7 @@ mod vim_utils {
         }
     }
 
-    pub fn is_line_end(slice: RopeSlice, range: Range, line: usize) -> bool {
+    pub fn _is_line_end(slice: RopeSlice, range: Range, line: usize) -> bool {
         let new_line_char =
             prev_grapheme_boundary(slice, slice.line_to_char(line + 1)) == range.cursor(slice);
 
@@ -857,7 +857,7 @@ mod vim_utils {
         line_end || new_line_char
     }
 
-    pub fn vim_move_horizontally(
+    pub fn vim_hx_move_horizontally(
         slice: RopeSlice,
         range: Range,
         dir: Direction,
@@ -866,33 +866,24 @@ mod vim_utils {
         _: &TextFormat,
         _: &mut TextAnnotations,
     ) -> Range {
-        let line = range.cursor_line(slice);
-
-        let line_start = slice.line_to_char(line) == range.cursor(slice);
-        let line_end = is_line_end(slice, range, line);
-
-        // Check horizontall boundaries
-        match dir {
-            Direction::Forward => {
-                if line_end {
-                    return range;
-                }
-            }
-            Direction::Backward => {
-                if line_start {
-                    return range;
-                }
-            }
-        };
-
-        // The following is copy/paste from movement::move_horizontally
+        // The following is adapted from movement::move_horizontally
         let pos = range.cursor(slice);
 
         // Compute the new position.
-        let new_pos = match dir {
+        let mut new_pos = match dir {
             Direction::Forward => nth_next_grapheme_boundary(slice, pos, count),
             Direction::Backward => nth_prev_grapheme_boundary(slice, pos, count),
         };
+
+        let line_start = slice.char_to_line(pos);
+        let line_new = slice.char_to_line(new_pos);
+
+        if line_new.abs_diff(line_start) != 0 {
+            new_pos = match dir {
+                Direction::Forward => line_end_char_index(&slice, line_start),
+                Direction::Backward => slice.line_to_char(line_start),
+            };
+        }
 
         // Compute the final new range.
         range.put_cursor(slice, new_pos, behaviour == Movement::Extend)
