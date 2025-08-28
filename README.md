@@ -7,26 +7,26 @@ A [Helix](https://helix-editor.com) patch that adds Vim-like keybindings. Ideal 
   <img src="./screenshot.png" alt="Screenshot" style="width:80%;" />
 </p>
 
-## Switching between Vim mode and Helix
+### Switching between Vim mode and Helix
 Vim mode is enabled by default. Use `:vim_disable` to switch to Helix mode, and `:vim_enable` to switch back.
 
-## Vim Supported Keybindings (Partial List)
+### Vim Supported Keybindings (Partial List)
 
-### Visual Mode, Visual Lines, and Visual Block
+#### Visual Mode, Visual Lines, and Visual Block
 - `v`, `V`
 - `va<char>`, `vi<textobject>` (`<textobject>`: `w`, `W`, `p`...etc)
 - Treesitter-related selection such as `vaf` to select a function.
 - `gv`
  - Visual Block: `C-v` works similarly to Vim’s *visual block* mode, but it’s not exactly the same — It simply creates multiple cursors.
 
-### Operators/Modifiers
+#### Operators/Modifiers
 
 - `d`, `dd`, `c`, `cc`, `y`, `yy` 
 - `[c|y|d]<motion>`  like `dw`, `dB`
 - `[c|y|d]{textobject}` like  `diw`, `da)`, `yi}`
 -  Treesitter-related modification keybindings such as `daf` to delete a function or `yaf` to yank a function.
 
-### Navigation
+#### Navigation
 
 - `*`, `#`, `n`, `N`
 - `0`, `^`, `$`
@@ -37,7 +37,7 @@ Vim mode is enabled by default. Use `:vim_disable` to switch to Helix mode, and 
 - `C-^`, `C-6`
 
 
-### 🔄 How to Find and Replace?
+#### 🔄 How to Find and Replace?
 If you have `sed` on your System, you can use `:s/../../flags` like Vim or `:s|..|..|flags`. You don't need to add `%`, it will default to `:%s` in normal mode and will be applied to the selection in `visual` mode.
 
 However, we advice using Helix multicursor to achive this:
@@ -54,14 +54,14 @@ However, we advice using Helix multicursor to achive this:
 4. **Exit multi-cursor mode**:  
    - Press `,` (comma)
 
-### 🗂️ Where’s the File Explorer?
+#### 🗂️ Where’s the File Explorer?
  - `<Space>e`  Open file explorer in workspace root
  - `<Space>E`  Open file explorer at current buffer's directory
  - `<Space>f`  Open file picker
  - `<Space>F`  Open file picker at current working directory
 
 
-## Installation
+### Installation
 #### Build from Source
 To get the latest, build this project from source—just like Helix itself.
 👉 [Follow the official Helix build guide](https://docs.helix-editor.com/building-from-source.html)
@@ -69,7 +69,7 @@ To get the latest, build this project from source—just like Helix itself.
 Download pre-built binaries from the [GitHub Releases page](https://github.com/badranX/vim.hx/releases/). Then, follow the [official Helix guide](https://docs.helix-editor.com/install.html#pre-built-binaries) for setup steps.
 
 
-## 🔍 Things to Watch For
+### 🔍 Things to Watch For
 This project is not intended to be a replica of Vim, so note the following differences:
 
  - No `Ctrl-R` for redo — Instead, use uppercase `U`, as in Helix. You can remap it.
