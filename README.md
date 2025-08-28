@@ -7,22 +7,22 @@ A [Helix](https://helix-editor.com) patch that adds Vim-like keybindings. Ideal 
   <img src="./screenshot.png" alt="Screenshot" style="width:80%;" />
 </p>
 
-### Installation
-#### Build from Source
+## Installation
+### Build from Source
 To get the latest, build this project from source—just like Helix itself.
 👉 [Follow the official Helix build guide](https://docs.helix-editor.com/building-from-source.html)
-#### Pre-built binaries
+### Pre-built binaries
 Download pre-built binaries from the [GitHub Releases page](https://github.com/badranX/vim.hx/releases/). Then, follow the [official Helix guide](https://docs.helix-editor.com/install.html#pre-built-binaries) for setup steps.
 
-
+## Features
 ### Switching between Vim mode and Helix
-Vim mode is enabled by default. Use `:vim_disable` to switch to Helix mode, and `:vim_enable` to switch back.
+Vim mode is enabled by default. Use `:vim_disable` and `:vim_enable` to disable and enable Vim emulation.
 
 ### Vim Supported Keybindings (Partial List)
 
 #### Visual Mode, Visual Lines, and Visual Block
-- `v`, `V`
-- `va<char>`, `vi<textobject>` (`<textobject>`: `w`, `W`, `p`...etc)
+- Visual mode and Visual lines: `v`, `V`
+- `va)`, `vi<textobject>` (`<textobject>`: `w`, `W`, `p`...etc)
 - Treesitter-related selection such as `vaf` to select a function.
 - `gv`
  - Visual Block: `C-v` works similarly to Vim’s *visual block* mode, but it’s not exactly the same — It simply creates multiple cursors.
@@ -62,7 +62,7 @@ However, we advice using Helix multicursor to achive this:
 4. **Exit multi-cursor mode**:  
    - Press `,` (comma)
 
-#### 🗂️ Where’s the File Explorer?
+### 🗂️  File Explorer (this is a Helix feature)
  - `<Space>e`  Open file explorer in workspace root
  - `<Space>E`  Open file explorer at current buffer's directory
  - `<Space>f`  Open file picker
