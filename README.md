@@ -16,7 +16,7 @@ Download pre-built binaries from the [GitHub Releases page](https://github.com/b
 
 ## Features
 ### Switching between Vim mode and Helix
-Vim mode is enabled by default. Use `:vim_disable` and `:vim_enable` to disable and enable Vim emulation.
+Vim mode is enabled by default. Use `:vim-disable` and `:vim-enable` to disable and enable Vim emulation.
 
 ### Vim Supported Keybindings (Partial List)
 
@@ -51,7 +51,7 @@ If you have `sed` on your System, you can use `:s/../../flags` like Vim or `:s|.
 However, we advice using Helix multicursor to achive this:
 1. **Select target text**
    - For the whole file: `ggVG`
-   - You can also remap `select_all`/`vim_select_all` as explained earlier.
+   - You can also remap `select_all`/`vim_select_all` to directly select all text.
 
 2. **Create multicursors**:
    - Press `s`, then type your regex (e.g., `foo`) and hit `<Enter>`. This will put a cursor on all `foo` in the buffer.
@@ -62,7 +62,7 @@ However, we advice using Helix multicursor to achive this:
 4. **Exit multi-cursor mode**:  
    - Press `,` (comma)
 
-### 🗂️  File Explorer (this is a Helix feature)
+### 🗂️  File Explorer/Picker (this is a Helix feature)
  - `<Space>e`  Open file explorer in workspace root
  - `<Space>E`  Open file explorer at current buffer's directory
  - `<Space>f`  Open file picker
@@ -70,7 +70,6 @@ However, we advice using Helix multicursor to achive this:
 
 
 ### 🔍 Things to Watch For
-This project is not intended to be a replica of Vim, so note the following differences:
 
  - No `Ctrl-R` for redo — Instead, use uppercase `U`, as in Helix. You can remap it.
  - `s` is used by Helix for `select_regex` and it's an important command for multi-cursor support. Either use `c` instead of `s` or remap keys.
