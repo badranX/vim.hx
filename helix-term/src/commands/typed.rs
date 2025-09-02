@@ -2677,7 +2677,7 @@ const WRITE_NO_FORMAT_FLAG: Flag = Flag {
 
 pub const TYPABLE_COMMAND_LIST: &[TypableCommand] = &[
     TypableCommand {
-        name: "vim_disable",
+        name: "vim-disable",
         aliases: &[],
         doc: "Enable vim.hx",
         fun: vim_typed_commands::vim_disable,
@@ -2688,7 +2688,7 @@ pub const TYPABLE_COMMAND_LIST: &[TypableCommand] = &[
         },
     },
     TypableCommand {
-        name: "vim_enable",
+        name: "vim-enable",
         aliases: &[],
         doc: "Disable vim.hx",
         fun: vim_typed_commands::vim_enable,
