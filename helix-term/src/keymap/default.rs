@@ -577,6 +577,7 @@ fn vim_default() -> HashMap<Mode, KeyTrie> {
 
         "u" => undo,
         "U" => redo,
+        "C-r" => redo,
         "A-u" => earlier,
         "A-U" => later,
 
@@ -795,6 +796,9 @@ fn vim_default() -> HashMap<Mode, KeyTrie> {
         "f" => extend_next_char,
         "T" => extend_till_prev_char,
         "F" => extend_prev_char,
+
+        "u" => switch_to_lowercase,
+        "U" => switch_to_uppercase,
 
         "home" => extend_to_line_start,
         "end" => extend_to_line_end,
