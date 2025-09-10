@@ -815,7 +815,7 @@ fn vim_default() -> HashMap<Mode, KeyTrie> {
         },
     }));
     let insert = keymap!({ "Insert mode"
-        "esc" => vim_normal_mode,
+        "esc" => vim_escape,
 
         "C-s" => commit_undo_checkpoint,
         "C-x" => completion,
