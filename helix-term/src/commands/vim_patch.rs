@@ -1279,8 +1279,7 @@ impl VimOpCtx {
                 yank_joined_impl(
                     cx.editor,
                     separator,
-                    cx.register
-                        .unwrap_or(cx.editor.config().default_yank_register),
+                    register.unwrap_or(cx.editor.config().default_yank_register),
                 );
                 vim_exit_select_mode(cx);
                 return;
