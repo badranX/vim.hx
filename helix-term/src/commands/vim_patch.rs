@@ -624,6 +624,7 @@ mod vim_commands {
                 extend_to_line_end(cx);
                 VimOpCtx::new(cx, VimOp::Delete).run_operator_for_current_selection(cx);
                 normal_mode(cx);
+                vim_move_char_left(cx);
             }
             Mode::Select => {
                 VimOpCtx::new(cx, VimOp::Delete).run_operator_lines(cx);
