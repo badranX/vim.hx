@@ -79,6 +79,7 @@ However, we advice using Helix multicursor to achive this:
  - Helix's `select_all` (`%`) is mapped to `match_brackets`, similar to Vim. `select_all` creates a selection in Normal mode. If you need the command in Vim mode, apply the previous trick or map it to `vim_select_all`.
 
  - `s` is used by Helix for `select_regex` and it's an important command for multi-cursor support. Either use `c` instead of `s` or remap keys.
+ - `C` is used by Helix for `copy_selection_on_next_line` and it's an important command for multi-cursor support. To get Vim behaviour, map it to `vim_change_till_line_end`.
  - To get Helix's `escape` behavior instead of Vim's, you can remap it to the `vim_normal_mode` command:
   ```toml
   [keys.insert]
