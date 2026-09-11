@@ -40,10 +40,20 @@ pub struct EditorView {
     on_next_key: Option<(OnKeyCallback, OnKeyCallbackKind)>,
     pseudo_pending: Vec<KeyEvent>,
     pub(crate) last_insert: (commands::MappableCommand, Vec<InsertEvent>),
+    pending_insert: Option<PendingInsert>,
+    last_pending_insert: Option<PendingInsert>,
     pub(crate) completion: Option<Completion>,
     spinners: ProgressSpinners,
     /// Tracks if the terminal window is focused by reaction to terminal focus events
     terminal_focused: bool,
+}
+
+#[derive(Clone)]
+struct PendingInsert {
+    command: commands::MappableCommand,
+    count: Option<NonZeroUsize>,
+    register: Option<char>,
+    keys: Vec<KeyEvent>,
 }
 
 #[derive(Debug, Clone)]
@@ -64,6 +74,8 @@ impl EditorView {
             on_next_key: None,
             pseudo_pending: Vec::new(),
             last_insert: (commands::MappableCommand::normal_mode, Vec::new()),
+            pending_insert: None,
+            last_pending_insert: None,
             completion: None,
             spinners: ProgressSpinners::default(),
             terminal_focused: true,
@@ -942,7 +954,22 @@ impl EditorView {
         cxt.editor.autoinfo = self.keymaps.sticky().map(|node| node.infobox());
 
         let mut execute_command = |command: &commands::MappableCommand| {
+            let count = cxt.count;
+            let register = cxt.register;
             command.execute(cxt);
+            if last_mode != Mode::Insert
+                && matches!(
+                    cxt.on_next_key_callback,
+                    Some((_, OnKeyCallbackKind::PseudoPending))
+                )
+            {
+                self.pending_insert = Some(PendingInsert {
+                    command: command.clone(),
+                    count,
+                    register,
+                    keys: Vec::new(),
+                });
+            }
             helix_event::dispatch(PostCommand { command, cx: cxt });
 
             let current_mode = cxt.editor.mode();
@@ -960,6 +987,8 @@ impl EditorView {
                     // we can repeat the side effect.
                     self.last_insert.0 = command.clone();
                     self.last_insert.1.clear();
+                    self.last_pending_insert = None;
+                    self.pending_insert = None;
                 }
             }
 
@@ -1030,7 +1059,24 @@ impl EditorView {
             (key!('.'), _) if self.keymaps.pending().is_empty() => {
                 for _ in 0..cxt.editor.count.map_or(1, NonZeroUsize::into) {
                     // first execute whatever put us into insert mode
-                    self.last_insert.0.execute(cxt);
+                    if let Some(pending) = self.last_pending_insert.clone() {
+                        cxt.count = pending.count;
+                        cxt.register = pending.register;
+                        pending.command.execute(cxt);
+                        for key in pending.keys {
+                            if let Some((callback, _)) = cxt.on_next_key_callback.take() {
+                                callback(cxt, key);
+                            }
+                        }
+                        cxt.count = None;
+                        cxt.register = None;
+                        // A text object or motion may no longer be applicable here.
+                        if cxt.editor.mode() != Mode::Insert {
+                            break;
+                        }
+                    } else {
+                        self.last_insert.0.execute(cxt);
+                    }
                     let mut last_savepoint = None;
                     let mut last_request_savepoint = None;
                     // then replay the inputs
@@ -1197,6 +1243,7 @@ impl EditorView {
         }
         self.handle_keymap_event(cxt.editor.mode, cxt, null_key_event);
         self.pseudo_pending.clear();
+        self.pending_insert = None;
     }
 
     fn handle_mouse_event(
@@ -1434,7 +1481,21 @@ impl EditorView {
     ) -> bool {
         if let Some((on_next_key, kind_)) = self.on_next_key.take() {
             if kind == kind_ {
+                let mode = ctx.editor.mode();
                 on_next_key(ctx, event);
+                if let Some(mut pending) = self.pending_insert.take() {
+                    pending.keys.push(event);
+                    if mode != Mode::Insert && ctx.editor.mode() == Mode::Insert {
+                        self.last_insert.0 = pending.command.clone();
+                        self.last_insert.1.clear();
+                        self.last_pending_insert = Some(pending);
+                    } else if matches!(
+                        ctx.on_next_key_callback,
+                        Some((_, OnKeyCallbackKind::PseudoPending))
+                    ) {
+                        self.pending_insert = Some(pending);
+                    }
+                }
                 true
             } else {
                 self.on_next_key = Some((on_next_key, kind_));
